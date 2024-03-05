@@ -21,5 +21,11 @@ public class GlobalExceptionHandler {
         return e.getMessage();
     }
 
+    @ExceptionHandler(ReportNotFoundException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String handelReportNotFoundException(ReportNotFoundException e){
+        return e.getMessage();
+    }
+
 
 }
