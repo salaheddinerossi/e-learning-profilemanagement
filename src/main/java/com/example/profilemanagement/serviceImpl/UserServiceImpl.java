@@ -1,8 +1,8 @@
 package com.example.profilemanagement.serviceImpl;
 
 import com.example.profilemanagement.dto.PersonalInfoDto;
-import com.example.profilemanagement.exception.EmailNotFoundException;
-import com.example.profilemanagement.exception.UserNotFoundException;
+import com.example.profilemanagement.exception.ResourceNotFoundException;
+import com.example.profilemanagement.mapper.ProfileMapper;
 import com.example.profilemanagement.model.User;
 import com.example.profilemanagement.repository.UserRepository;
 import com.example.profilemanagement.response.UserResponse;
@@ -13,45 +13,37 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
     final
+    ProfileMapper profileMapper;
+
+    final
     UserRepository userRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, ProfileMapper profileMapper) {
         this.userRepository = userRepository;
+        this.profileMapper = profileMapper;
     }
 
     @Override
-    public void changePersonalInfo(PersonalInfoDto personalInfoDto,String email) {
+    public PersonalInfoDto changePersonalInfo(PersonalInfoDto personalInfoDto,String email) {
 
         User user = userRepository.findByEmail(email).orElseThrow(
-                EmailNotFoundException::new
+                () -> new ResourceNotFoundException("user not found with this email: "+ email)
         );
 
-        user.setEmail(personalInfoDto.getEmail());
-        user.setFirstName(personalInfoDto.getFirstName());
-        user.setLastName(personalInfoDto.getLastName());
+        profileMapper.updateUserInfoFromDto(personalInfoDto, user);
 
         userRepository.save(user);
+        return personalInfoDto;
 
     }
 
     @Override
     public UserResponse getUser(String email) {
         User user =  userRepository.findByEmail(email).orElseThrow(
-                UserNotFoundException::new
+                () -> new ResourceNotFoundException("user not found with this email: "+email)
         );
 
-        return setUserResponse(user);
-    }
-
-    public UserResponse setUserResponse(User user){
-        UserResponse userResponse = new UserResponse();
-
-        userResponse.setId(user.getId());
-        userResponse.setFirstName(user.getFirstName());
-        userResponse.setLastName(user.getLastName());
-        userResponse.setEmail(user.getEmail());
-
-        return userResponse;
+        return profileMapper.userToUserResponse(user);
     }
 
 

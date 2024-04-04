@@ -1,7 +1,7 @@
 package com.example.profilemanagement.serviceImpl;
 
 import com.example.profilemanagement.dto.UserDetailsDto;
-import com.example.profilemanagement.exception.TokenNotValidException;
+import com.example.profilemanagement.exception.InvalidTokenException;
 import com.example.profilemanagement.service.AuthService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
             return response.getBody();
 
         }catch (HttpClientErrorException ex){
-            throw new TokenNotValidException();
+            throw new InvalidTokenException("authentication failed");
         }
 
     }

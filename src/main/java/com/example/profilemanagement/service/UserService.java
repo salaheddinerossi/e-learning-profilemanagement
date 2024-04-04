@@ -5,7 +5,7 @@ import com.example.profilemanagement.response.UserResponse;
 
 public interface UserService {
 
-    void changePersonalInfo(PersonalInfoDto personalInfoDto,String email);
+    PersonalInfoDto changePersonalInfo(PersonalInfoDto personalInfoDto,String email);
 
     UserResponse getUser(String email);
 

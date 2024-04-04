@@ -1,7 +1,8 @@
 package com.example.profilemanagement.serviceImpl;
 
 import com.example.profilemanagement.dto.TeacherDto;
-import com.example.profilemanagement.exception.UserNotFoundException;
+import com.example.profilemanagement.exception.ResourceNotFoundException;
+import com.example.profilemanagement.mapper.TeacherMapper;
 import com.example.profilemanagement.model.Teacher;
 import com.example.profilemanagement.repository.TeacherRepository;
 import com.example.profilemanagement.service.TeacherService;
@@ -17,18 +18,22 @@ public class TeacherServiceImpl implements TeacherService {
     final
     TeacherRepository teacherRepository;
 
-    public TeacherServiceImpl(TeacherRepository teacherRepository) {
+    final
+    TeacherMapper teacherMapper;
+
+    public TeacherServiceImpl(TeacherRepository teacherRepository, TeacherMapper teacherMapper) {
         this.teacherRepository = teacherRepository;
+        this.teacherMapper = teacherMapper;
     }
 
     @Override
     public TeacherDto getTeacher(String email) {
-        return setTeacherDto(findTeacherByEmail(email));
+        return teacherMapper.teacherToTeacherDto(findTeacherByEmail(email));
     }
 
     @Override
     public TeacherDto getTeacherById(Long id) {
-        return setTeacherDto(findTeacherById(id));
+        return teacherMapper.teacherToTeacherDto(findTeacherById(id));
     }
 
     @Override
@@ -66,35 +71,18 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     public List<TeacherDto> allAccounts() {
         List<Teacher> teachers = teacherRepository.findAll();
-        List<TeacherDto> teacherDtos = new ArrayList<>();
 
-        for (Teacher teacher : teachers ){
-            teacherDtos.add(setTeacherDto(teacher));
-        }
-
-        return teacherDtos;
+        return teacherMapper.teacherListToTeacherDtoList(teachers);
     }
 
     @Override
     public Teacher findTeacherByEmail(String email) {
         return  teacherRepository.findByEmail(email).orElseThrow(
-                UserNotFoundException::new
+                () -> new ResourceNotFoundException("user not found with this email: "+email)
         );
     }
 
-    public  TeacherDto setTeacherDto(Teacher teacher){
-        TeacherDto teacherDto = new TeacherDto();
 
-        teacherDto.setId(teacher.getId());
-        teacherDto.setEmail(teacher.getEmail());
-        teacherDto.setFirstName(teacher.getFirstName());
-        teacherDto.setLastName(teacher.getLastName());
-        teacherDto.setPhoneNumber(teacher.getPhoneNumber());
-        teacherDto.setIsActive(teacher.getIsActive());
-
-        return teacherDto;
-
-    }
 
     public List<TeacherDto> getTeachersByAccountState(Boolean state){
         List<Teacher> teachers = teacherRepository.findAll();
@@ -102,7 +90,7 @@ public class TeacherServiceImpl implements TeacherService {
 
         for(Teacher teacher:teachers){
             if (teacher.getIsActive()==state){
-                teacherDtos.add(setTeacherDto(teacher));
+                teacherDtos.add(teacherMapper.teacherToTeacherDto(teacher));
             }
         }
 
@@ -111,7 +99,7 @@ public class TeacherServiceImpl implements TeacherService {
 
     public  Teacher findTeacherById(Long id){
         return teacherRepository.findById(id).orElseThrow(
-                UserNotFoundException::new
+                () -> new ResourceNotFoundException("user not found with this id: "+id)
         );
     }
 

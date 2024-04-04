@@ -1,8 +1,8 @@
 package com.example.profilemanagement.serviceImpl;
 
 import com.example.profilemanagement.dto.ReportDto;
-import com.example.profilemanagement.exception.ReportNotFoundException;
-import com.example.profilemanagement.exception.UserNotFoundException;
+import com.example.profilemanagement.exception.ResourceNotFoundException;
+import com.example.profilemanagement.mapper.ReportMapper;
 import com.example.profilemanagement.model.Report;
 import com.example.profilemanagement.model.User;
 import com.example.profilemanagement.repository.ReportRepository;
@@ -11,7 +11,6 @@ import com.example.profilemanagement.response.ReportResponse;
 import com.example.profilemanagement.service.ReportService;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,26 +24,25 @@ public class ReportServiceImpl implements ReportService {
     final
     ReportRepository reportRepository;
 
-    public ReportServiceImpl(ReportRepository reportRepository, UserRepository userRepository) {
+    final
+    ReportMapper reportMapper;
+
+    public ReportServiceImpl(ReportRepository reportRepository, UserRepository userRepository, ReportMapper reportMapper) {
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
+        this.reportMapper = reportMapper;
     }
 
     @Override
-    public void createReport(ReportDto reportDto, String email) {
+    public ReportResponse createReport(ReportDto reportDto, String email) {
         User user = userRepository.findByEmail(email).orElseThrow(
-                UserNotFoundException::new
+                () -> new ResourceNotFoundException("user not found with this email:" + email)
         );
 
-        Report report = new Report();
-
-        report.setTitle(reportDto.getTitle());
-        report.setText(reportDto.getText());
+        Report report = reportMapper.reportDtoToReport(reportDto);
         report.setUser(user);
-        report.setReportDate(LocalDateTime.now());
-        report.setIsArchived(false);
 
-        reportRepository.save(report);
+        return reportMapper.reportToReportResponse(reportRepository.save(report));
     }
 
     @Override
@@ -57,20 +55,14 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public ReportResponse getReportById(Long id) {
-        return setReportResponse(getReportRepository(id));
+        return reportMapper.reportToReportResponse(getReportRepository(id));
     }
 
     @Override
     public List<ReportResponse> getAllReports() {
 
         List<Report> reports = reportRepository.findAll();
-        List<ReportResponse> reportResponses = new ArrayList<>();
-
-        for (Report report:reports){
-            reportResponses.add(setReportResponse(report));
-        }
-
-        return reportResponses;
+        return reportMapper.reportListToReportResponseList(reports);
     }
 
     @Override
@@ -85,24 +77,10 @@ public class ReportServiceImpl implements ReportService {
 
     Report getReportRepository(Long id){
         return reportRepository.findById(id).orElseThrow(
-                ReportNotFoundException::new
+                () -> new ResourceNotFoundException("report not found with this id: "+id)
         );
     }
 
-    ReportResponse setReportResponse(Report report){
-        ReportResponse reportResponse = new ReportResponse();
-
-        reportResponse.setId(report.getId());
-        reportResponse.setTitle(report.getTitle());
-        reportResponse.setText(report.getText());
-        reportResponse.setReportDate(report.getReportDate());
-        reportResponse.setIsArchived(report.getIsArchived());
-        reportResponse.setFirstName(report.getUser().getFirstName());
-        reportResponse.setLastName(report.getUser().getLastName());
-        reportResponse.setEmail(report.getUser().getEmail());
-
-        return reportResponse;
-    }
 
     public List<ReportResponse> getReportResponsesByState(boolean state){
         List<ReportResponse> reportResponses = new ArrayList<>();
@@ -111,7 +89,7 @@ public class ReportServiceImpl implements ReportService {
 
         for (Report report:reports){
             if (report.getIsArchived()==state){
-                reportResponses.add(setReportResponse(report));
+                reportResponses.add(reportMapper.reportToReportResponse(report));
             }
         }
         return reportResponses;

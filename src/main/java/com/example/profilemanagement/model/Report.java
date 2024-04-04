@@ -19,7 +19,7 @@ public class Report {
 
     private String text;
 
-    private Boolean isArchived;
+    private Boolean isArchived=false;
 
     private LocalDateTime reportDate;
 

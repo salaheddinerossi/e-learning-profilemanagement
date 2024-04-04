@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ReportService {
 
-    void createReport(ReportDto reportDto, String email);
+    ReportResponse createReport(ReportDto reportDto, String email);
 
     void archiveReport(Long id);
 

@@ -2,8 +2,10 @@ package com.example.profilemanagement.controller;
 
 import com.example.profilemanagement.dto.ReportDto;
 import com.example.profilemanagement.dto.UserDetailsDto;
+import com.example.profilemanagement.response.ReportResponse;
 import com.example.profilemanagement.service.AuthService;
 import com.example.profilemanagement.service.ReportService;
+import com.example.profilemanagement.util.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +20,8 @@ public class ReportController {
     @Value("${auth.url}")
     private String authUrl;
 
-    final
-    AuthService authService;
-
-    final ReportService reportService;
+    private final AuthService authService;
+    private final ReportService reportService;
 
     public ReportController(AuthService authService, ReportService reportService) {
         this.authService = authService;
@@ -29,56 +29,55 @@ public class ReportController {
     }
 
     @PostMapping("/")
-    ResponseEntity<?> createReport(@RequestBody ReportDto reportDto, @RequestHeader("Authorization") String token){
+    public ResponseEntity<ApiResponse<ReportResponse>> createReport(@RequestBody ReportDto reportDto, @RequestHeader("Authorization") String token) {
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl, token);
-        if (!isAdmin(userDetailsDto)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not allowed");
-        }
-
-        reportService.createReport(reportDto,userDetailsDto.getEmail());
-
-        return ResponseEntity.ok("report has been created");
+        ReportResponse reportResponse = reportService.createReport(reportDto, userDetailsDto.getEmail());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Report has been created", reportResponse));
     }
 
     @GetMapping("/{id}")
-    ResponseEntity<?> getReport(@PathVariable Long id, @RequestHeader("Authorization") String token){
+    public ResponseEntity<ApiResponse<?>> getReport(@PathVariable Long id, @RequestHeader("Authorization") String token) {
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl, token);
         if (!isAdmin(userDetailsDto)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not allowed");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, "You are not allowed", null));
         }
-
-        return ResponseEntity.ok(reportService.getReportById(id));
+        return ResponseEntity.ok(new ApiResponse<>(true, "Success", reportService.getReportById(id)));
     }
 
-    @GetMapping("/accounts/{state}")
-    public ResponseEntity<?> getAccountsByState(@PathVariable("state") String state, @RequestHeader("Authorization") String token) {
+    @GetMapping("/{state}")
+    public ResponseEntity<ApiResponse<?>> getReportsByState(@PathVariable("state") String state, @RequestHeader("Authorization") String token) {
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl, token);
         if (!isAdmin(userDetailsDto)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not allowed");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, "You are not allowed", null));
         }
 
-        return switch (state.toLowerCase()) {
-            case "all" -> ResponseEntity.ok(reportService.getAllReports());
-            case "archived" -> ResponseEntity.ok(reportService.getArchivedReports());
-            case "new" -> ResponseEntity.ok(reportService.getNewReports());
-            default -> ResponseEntity.badRequest().body("Invalid account state");
-        };
+        switch (state.toLowerCase()) {
+            case "all" -> {
+                return ResponseEntity.ok(new ApiResponse<>(true, "All reports", reportService.getAllReports()));
+            }
+            case "archived" -> {
+                return ResponseEntity.ok(new ApiResponse<>(true, "Archived reports", reportService.getArchivedReports()));
+            }
+            case "new" -> {
+                return ResponseEntity.ok(new ApiResponse<>(true, "New reports", reportService.getNewReports()));
+            }
+            default -> {
+                return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Invalid report state", null));
+            }
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> archiveReport(@PathVariable Long id,@RequestHeader("Authorization") String token){
+    public ResponseEntity<ApiResponse<String>> archiveReport(@PathVariable Long id, @RequestHeader("Authorization") String token) {
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl, token);
         if (!isAdmin(userDetailsDto)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not allowed");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(false, "You are not allowed", null));
         }
-
         reportService.archiveReport(id);
-
-        return ResponseEntity.ok("account has been archived");
+        return ResponseEntity.ok(new ApiResponse<>(true, "Report has been archived", null));
     }
 
-    public Boolean isAdmin(UserDetailsDto userDetailsDto){
+    private Boolean isAdmin(UserDetailsDto userDetailsDto) {
         return Objects.equals(userDetailsDto.getRole(), "ROLE_ADMIN");
     }
-
 }
