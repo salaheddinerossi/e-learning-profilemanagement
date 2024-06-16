@@ -44,7 +44,7 @@ public class ReportController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Success", reportService.getReportById(id)));
     }
 
-    @GetMapping("/{state}")
+    @GetMapping("reports/{state}")
     public ResponseEntity<ApiResponse<?>> getReportsByState(@PathVariable("state") String state, @RequestHeader("Authorization") String token) {
         UserDetailsDto userDetailsDto = authService.getUserDetailsFromAuthService(authUrl, token);
         if (!isAdmin(userDetailsDto)) {

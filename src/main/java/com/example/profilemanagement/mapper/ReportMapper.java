@@ -13,7 +13,9 @@ import java.util.List;
 public interface ReportMapper {
 
 
-    @Mapping(target = "isArchived",ignore = true)
+    @Mapping(target = "firstName",source = "user.firstName")
+    @Mapping(target = "lastName",source = "user.lastName")
+    @Mapping(target = "email",source = "user.email")
     ReportResponse reportToReportResponse(Report report);
 
     List<ReportResponse> reportListToReportResponseList(List<Report> report);

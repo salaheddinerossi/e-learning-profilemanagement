@@ -11,6 +11,7 @@ import com.example.profilemanagement.response.ReportResponse;
 import com.example.profilemanagement.service.ReportService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class ReportServiceImpl implements ReportService {
 
         Report report = reportMapper.reportDtoToReport(reportDto);
         report.setUser(user);
-
+        report.setReportDate(LocalDateTime.now());
         return reportMapper.reportToReportResponse(reportRepository.save(report));
     }
 

@@ -26,7 +26,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserDetailsDto getUserDetailsFromAuthService(String serviceUrl, String token) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token); // Set the token
+        if (!token.startsWith("Bearer ")) {
+            token = "Bearer " + token;
+        }
+        headers.set("Authorization", token);
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
 
         try{
@@ -39,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
             return response.getBody();
 
         }catch (HttpClientErrorException ex){
-            throw new InvalidTokenException("authentication failed");
+            throw new InvalidTokenException("token is not valid");
         }
 
     }
